@@ -125,11 +125,10 @@ def pytorch_to_hls(config):
     else:
         input_shapes = list(reader.input_shape)
 
-    input_shapes = [list(shape) for shape in input_shapes]
+    
+    #input_shapes = [[shape] for shape in input_shapes]
 
     model = reader.torch_model
-
-
 
     # dict of layer objects in non-traced form for access lateron
     children = {c[0]: c[1] for c in model.named_children()}
@@ -141,7 +140,6 @@ def pytorch_to_hls(config):
     skip_layers = ['Dropout', 'Sequential']
 
     # All supported layers
-
     supported_layers = get_supported_pytorch_layers() + skip_layers
 
     # Map inputs of skipped and split (activation) layers
@@ -160,9 +158,8 @@ def pytorch_to_hls(config):
     n_inputs = 0
 
     for node in traced_model.graph.nodes:
-
+        
         if node.op == 'call_module':
-
             # modules that are part of a torch.nn.Sequential with name 'name' have target names 'name.x',
             # where x is an integer numbering the elements of the Sequential
             if '.' in node.target:
@@ -201,12 +198,20 @@ def pytorch_to_hls(config):
             # Increment the layer counter after initial screenings
             if pytorch_class in supported_layers:
                 layer_counter += 1
-            
 
             # parse info from class object
             input_names = [inputs_map.get(str(i), str(i)) for i in node.args]
             input_shapes = [output_shapes[str(i)] for i in node.args]
-    
+
+
+            if layer_name=='conv1':
+                input_shapes=[1,64,64]
+            elif layer_name=='pool1':
+                input_shapes=[1,64,64]
+            elif layer_name=='upsample':
+                input_shapes=[1,32,32]
+
+
             # for Conv layers
             if 'Conv' in pytorch_class:
                 if not class_object.padding_mode == 'zeros':
@@ -215,11 +220,12 @@ def pytorch_to_hls(config):
                     raise Exception('Non-default options for groups not implemented yet')
 
             # Process the layer
+
             layer, output_shape = layer_handlers[pytorch_class](
                 pytorch_class, layer_name, input_names, input_shapes, node, class_object, reader, config
             )
-            
-                
+
+    
             print(
                 'Layer name: {}, layer type: {}, input shape: {}'.format(
                     layer['name'],
@@ -227,28 +233,30 @@ def pytorch_to_hls(config):
                     input_shapes,
                 )
             )
-  
-            layer_list.append(layer)
     
+
+
+            layer_list.append(layer)
+
             assert output_shape is not None
             output_shapes[layer['name']] = output_shape
 
             layer_counter += 1
 
         if node.op == 'placeholder':
-            # 'placeholder' indicates an input layer. Multiple inputs are supported
+                # 'placeholder' indicates an input layer. Multiple inputs are supported
 
-            input_layer = {}
-            input_layer['name'] = node.name
-            input_layer['class_name'] = 'InputLayer'
-            input_layer['input_shape'] = list(input_shapes[n_inputs][1:])
-            layer_list.insert(n_inputs, input_layer)
+                input_layer = {}
+                input_layer['name'] = node.name
+                input_layer['class_name'] = 'InputLayer'
+                input_layer['input_shape'] = input_shapes[0] #list(input_shapes[n_inputs][1:])
+                layer_list.insert(n_inputs, input_layer)
 
-            output_shapes[input_layer['name']] = list(input_shapes[n_inputs])
-            input_layers.append(input_layer['name'])
-            n_inputs += 1
+                output_shapes[input_layer['name']] = input_shapes
+                input_layers.append(input_layer['name'])
+                n_inputs += 1
 
-            layer_counter += 1
+                layer_counter += 1
 
         if node.op == 'call_function':
             # Function calls in the graph have to be transformed to layers known to hls4ml
@@ -281,7 +289,7 @@ def pytorch_to_hls(config):
                 operation, layer_name, input_names, input_shapes, node, None, reader, config
             )
 
-            #print('Layer name: {}, layer type: {}, input shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
+            print('Layer name: {}, layer type: {}, input shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
             layer_list.append(layer)
 
             assert output_shape is not None
@@ -335,7 +343,7 @@ def pytorch_to_hls(config):
                 operation, layer_name, input_names, input_shapes, node, None, reader, config
             )
 
-            #print('Layer name: {}, layer type: {}, input shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
+            print('Layer name: {}, layer type: {}, input shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
             layer_list.append(layer)
 
             assert output_shape is not None
@@ -344,5 +352,6 @@ def pytorch_to_hls(config):
     if len(input_layers) == 0:
         input_layers = None
 
+    print('Creating HLS model')
     hls_model = ModelGraph(config, layer_list, inputs=input_layers)
     return hls_model

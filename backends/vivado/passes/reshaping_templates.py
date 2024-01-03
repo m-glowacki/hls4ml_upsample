@@ -67,8 +67,8 @@ resize_config_template = """struct config{index} : nnet::resize_config {{
     static const unsigned new_width = {out_width};
 }};\n"""
 
-resize_function_template = 'nnet::resize_{algorithm}<{input_t}, {config}>({input}, {output});'
 
+resize_function_template = 'nnet::resize_{algorithm}<{input_t}, {config}>({input}, {output});'
 resize_include_list = ['nnet_utils/nnet_image.h', 'nnet_utils/nnet_image_stream.h']
 
 
@@ -79,6 +79,7 @@ class ResizeConfigTemplate(LayerConfigTemplate):
 
     def format(self, node):
         params = self._default_config_params(node)
+
 
         return self.template.format(**params)
 
@@ -101,7 +102,8 @@ transpose_config_template = """struct config{index} : nnet::transpose_config {{
     static const unsigned depth = {depth};
     static const unsigned height = {height};
     static const unsigned width = {width};
-    static constexpr unsigned perm[3] = {{{perm_str}}};
+    static const unsigned n_chan = 1;  // Add this line
+    static constexpr unsigned perm[4] = {{{perm_str}}};  // Adjust the size to 4
 }};\n"""
 
 transpose_function_template = 'nnet::transpose_{dim}<{input_t}, {output_t}, {config}>({input}, {output});'

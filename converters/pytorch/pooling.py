@@ -62,9 +62,8 @@ def parse_pooling_layer(operation, layer_name, input_names, input_shapes, node, 
         elif layer['data_format'] == 'channels_first':
             output_shape = [input_shapes[0][0], layer['n_filt'], layer['n_out']]
 
-
     elif int(layer['class_name'][-2]) == 2:
-        (layer['in_height'], layer['in_width'], layer['n_filt']) = [64,64,1]#parse_data_format(input_shapes[0], layer['data_format'])
+        (layer['in_height'], layer['in_width'], layer['n_filt']) = parse_data_format([1,64,64], layer['data_format'])
 
         if node.op == 'call_module':
             if type(class_object.stride) is tuple:
@@ -130,8 +129,8 @@ def parse_pooling_layer(operation, layer_name, input_names, input_shapes, node, 
         )
 
         if layer['data_format'] == 'channels_last':
-            output_shape = [1,64,64] #[input_shapes[0][0], layer['out_height'], layer['out_width'], layer['n_filt']]
+            output_shape = [input_shapes, layer['out_height'], layer['out_width'], layer['n_filt']]
         elif layer['data_format'] == 'channels_first':
-            output_shape = [1,32,32] #[input_shapes[0][0], layer['n_filt'], layer['out_height'], layer['out_width']]
+            output_shape = [input_shapes, layer['n_filt'], layer['out_height'], layer['out_width']]
 
     return layer, output_shape

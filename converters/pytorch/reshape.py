@@ -109,23 +109,28 @@ def parse_flatten_layer(operation, layer_name, input_names, input_shapes, node, 
 
 
 @pytorch_handler('Upsample')
-def handle_upsample(operation, layer_name, input_names, node, class_object, data_reader, config, input_shape=[1, 32, 32]):
+def handle_upsample(operation, layer_name, input_names, node, class_object, data_reader, config, input_shape=[None, 32,32,1]):
+
 
     layer = {}
     layer['name'] = "Upsample"
     layer['class_name'] = 'Upsample'
     layer['input_shape'] = input_shape
+    layer['data_format'] = 'channels_first' 
     layer['height_factor'] = 2
     layer['width_factor'] = 2
     layer['mode'] = "nearest"
     layer['algorithm'] = "nearest"
     layer['inputs'] = input_names
-    layer['in_height'] = 0
+    layer['in_height'] = 32
     layer['in_width'] = 32
+    layer['n_chan'] = 1
     layer['out_height'] = 64
     layer['out_width'] = 64
-    layer['n_chan'] = 1
+    
+
+    #layer = {'name': 'up_sampling2d_1', 'class_name': 'UpSampling2D', 'data_format': 'channels_last', 'in_height': 1, 'in_width': 32, 'n_chan': 32, 'algorithm': 'nearest', 'height_factor': 2, 'width_factor': 2, 'out_height': 64, 'out_width': 64}
 
     # Calculate output shape
     # Apply the scale factor to the spatial dimensions (height and width)
-    return layer, [1, 64, 64]
+    return layer, [None, 1, 64, 64]

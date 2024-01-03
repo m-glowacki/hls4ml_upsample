@@ -358,11 +358,14 @@ class ModelGraph:
 
         self._make_graph(layer_list)
 
+        #print("here")
+        #print(layer_list)
+
         for flow in self.config.flows:
             self.apply_flow(flow)
 
     def _find_output_variable_names(self, layer_list, layer_names):
-        """Given a list of all layers, and a list input/output names, find the names of their outputs that will be used
+        """Given a list of all layers, and a list input/output names, find the names of their g that will be used
         as the name of the output variables."""
         inout_nodes = []
         for layer_name in layer_names:
@@ -460,7 +463,7 @@ class ModelGraph:
         Returns:
             Layer: The node created.
         """
-        
+
         if isinstance(kind, str):
             if kind not in layer_map:
                 raise Exception(f'Layer {kind} not found in registry.')
@@ -623,7 +626,10 @@ class ModelGraph:
         return variables
 
     def register_output_variable(self, out_name, variable):
+        print(variable.__dict__)
         if len(self.outputs) == 1 and out_name in self.outputs:
+            #variable.shape = [64,64,1]
+            #print(variable.__dict__)
             variable.type.name = 'result_t'
         self.output_vars[out_name] = variable
 

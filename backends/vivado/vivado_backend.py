@@ -279,7 +279,8 @@ class VivadoBackend(FPGABackend):
 
         layer.set_attr('implementation', layer.model.config.get_conv_implementation(layer).lower())
 
-        self._validate_conv_strategy(layer)
+        layer.model.config.pipeline_style = 'dataflow'
+        #self._validate_conv_strategy(layer)
 
     @layer_optimizer(SeparableConv1D)
     def init_sepconv1d(self, layer):
@@ -334,7 +335,8 @@ class VivadoBackend(FPGABackend):
 
         layer.set_attr('implementation', layer.model.config.get_conv_implementation(layer).lower())
 
-        self._validate_conv_strategy(layer)
+        layer.model.config.pipeline_style = 'dataflow'
+        #self._validate_conv_strategy(layer)
 
     @layer_optimizer(SeparableConv2D)
     def init_sepconv2d(self, layer):

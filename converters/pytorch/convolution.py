@@ -70,8 +70,9 @@ def parse_conv2d_layer(operation, layer_name, input_names, input_shapes, node, c
         layer['bias_data'] = None
 
     # Input info
+        
     (layer['in_height'], layer['in_width'], layer['n_chan']) = parse_data_format(
-        input_shapes[0], 'channels_first'
+        [1,64,64], 'channels_first'
     )  # Keras's default is channels_last
 
     # Additional parameters
@@ -102,6 +103,7 @@ def parse_conv2d_layer(operation, layer_name, input_names, input_shapes, node, c
         class_object.dilation[1],
     )
 
-    output_shape = [1,64,64] #[input_shapes[0][0], layer['n_filt'], layer['out_height'], layer['out_width']]
+
+    output_shape = [input_shapes, layer['n_filt'], layer['out_height'], layer['out_width']]
 
     return layer, output_shape

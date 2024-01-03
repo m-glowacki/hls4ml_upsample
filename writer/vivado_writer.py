@@ -109,7 +109,6 @@ class VivadoWriter(Writer):
             model (ModelGraph): the hls4ml model.
         """
 
-
         filedir = os.path.dirname(os.path.abspath(__file__))
 
         f = open(os.path.join(filedir, '../templates/vivado/firmware/myproject.cpp'))
@@ -187,16 +186,19 @@ class VivadoWriter(Writer):
             elif '// hls-fpga-machine-learning insert layers' in line:
                 newline = line + '\n'
                 for layer in model.get_layers():
-                    print(layer)
                     vars = layer.get_variables()
                     for var in vars:
                         if var not in model_inputs and var not in model_outputs:
                             def_cpp = var.definition_cpp()
+                            #print('here')
+                            #print(var.__dict__)
+                            #print(def_cpp)
                             if def_cpp is not None:
                                 newline += '    ' + def_cpp + ';\n'
                                 if var.pragma:
                                     newline += '    ' + self._make_array_pragma(var) + '\n'
                     func = layer.get_attr('function_cpp', None)
+    
                     if func:
                         if not isinstance(func, (list, set)):
                             func = [func]
@@ -204,7 +206,6 @@ class VivadoWriter(Writer):
                             newline += '    ' + func[0] + ' // ' + layer.name + '\n'
                         else:
                             newline += '    // ' + layer.name + '\n'
-
                             for line in func:
                                 newline += '    ' + line + '\n'
                         if model.config.trace_output and layer.get_attr('trace', False):
@@ -336,6 +337,7 @@ class VivadoWriter(Writer):
                 newline = line
                 for layer in model.get_layers():
                     config = layer.get_attr('config_cpp', None)
+                    #print(config)
                     if config:
                         newline += '// ' + layer.name + '\n'
                         newline += config + '\n'

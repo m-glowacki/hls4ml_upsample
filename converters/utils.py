@@ -19,6 +19,8 @@ def parse_data_format(input_shape, data_format='channels_last'):
     Returns:
         tuple: The input shape (without the batch dimension) in ``channels_last`` format.
     """
+
+
     if input_shape[0] is None:
         # Ignore batch size
         input_shape = input_shape[1:]

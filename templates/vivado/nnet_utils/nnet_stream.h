@@ -179,12 +179,17 @@ void broadcast_stream(hls::stream<data_T> &data, hls::stream<res_T> &res) {
     }
 }
 
-template <class data_T, class res_T, typename CONFIG_T>
-void transpose_2d(hls::stream<data_T> &data, hls::stream<res_T> &res) {
-    typename data_T::value_type data_array[CONFIG_T::height * CONFIG_T::width];
+template <typename data_T, typename res_T, typename CONFIG_T>
+void transpose_3d(hls::stream<data_T> &data, hls::stream<res_T> &res) {
+    const int HEIGHT = CONFIG_T::height;
+    const int WIDTH = CONFIG_T::width;
+    const int CHANNELS = CONFIG_T::n_chan;
+
+    typename data_T::value_type data_array[HEIGHT * WIDTH * CHANNELS];
     #pragma HLS ARRAY_PARTITION variable=data_array complete
 
-    for (int i = 0; i < CONFIG_T::height * CONFIG_T::width / data_T::size; i++) {
+    // Read data from the input stream and store it in the array
+    for (int i = 0; i < HEIGHT * WIDTH * CHANNELS / data_T::size; i++) {
         #pragma HLS PIPELINE
         data_T in_data = data.read();
         for (int j = 0; j < data_T::size; j++) {
@@ -192,14 +197,17 @@ void transpose_2d(hls::stream<data_T> &data, hls::stream<res_T> &res) {
         }
     }
 
-    for (int i = 0; i < CONFIG_T::height * CONFIG_T::width / res_T::size; i++) {
+    // Transpose the data from (c, h, w) to (h, w, c)
+    for (int h = 0; h < HEIGHT; h++) {
         #pragma HLS PIPELINE
-        res_T out_data;
-        PRAGMA_DATA_PACK(out_data)
-        for (int j = 0; j < res_T::size; j++) {
-            out_data[j] = typename res_T::value_type(data_array[j * data_T::size + i]);
+        for (int w = 0; w < WIDTH; w++) {
+            for (int c = 0; c < CHANNELS; c++) {
+                res_T out_data;
+                PRAGMA_DATA_PACK(out_data)
+                out_data[c] = typename res_T::value_type(data_array[(c * HEIGHT + h) * WIDTH + w]);
+                res.write(out_data);
+            }
         }
-        res.write(out_data);
     }
 }
 } // namespace nnet

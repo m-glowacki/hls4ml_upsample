@@ -243,7 +243,7 @@ class Layer:
 
         if precision is None:
             precision, _ = self.model.config.get_precision(self, var='result')
-
+        
         out = TensorVariable(shape, dim_names, var_name=var_name, type_name=type_name, precision=precision, index=self.index)
 
         self.set_attr(out_name, out)
@@ -331,6 +331,8 @@ class Layer:
 class Input(Layer):
     def initialize(self):
         shape = self.attributes['input_shape']
+
+
         if shape[0] is None:
             shape = shape[1:]
         dims = [f'N_INPUT_{i}_{self.index}' for i in range(1, len(shape) + 1)]
@@ -917,8 +919,8 @@ class Resize(Layer):
             shape = [self.get_attr('out_width'), self.get_attr('n_chan')]
             dims = [f'OUT_WIDTH_{self.index}', f'N_CHAN_{self.index}']
         elif len(inp.shape) == 3:  # 2D -> height + width + chan
-            shape = [self.get_attr('out_height'), self.get_attr('out_width'), self.get_attr('n_chan')]
-            dims = [f'OUT_HEIGHT_{self.index}', f'OUT_WIDTH_{self.index}', f'N_CHAN_{self.index}']
+            shape = [ self.get_attr('n_chan'), self.get_attr('out_height'), self.get_attr('out_width')]
+            dims = [f'N_CHAN_{self.index}', f'OUT_HEIGHT_{self.index}', f'OUT_WIDTH_{self.index}']
         self.add_output_variable(shape, dims, precision=inp.type.precision)
 
 
